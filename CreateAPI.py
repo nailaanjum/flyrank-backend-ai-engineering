@@ -25,7 +25,10 @@ class TaskUpdate(BaseModel):
 
 
 # Stage 1: Root endpoint
-@app.get("/")
+@app.get(
+    "/",
+    description="Returns information about the Task API"
+)
 async def root():
     return {
         "name": "Task API",
@@ -35,19 +38,28 @@ async def root():
 
 
 # Stage 1: Health endpoint
-@app.get("/health")
+@app.get(
+    "/health",
+    description="Checks whether the API is running"
+)
 async def health():
     return {"status": "ok"}
 
 
 # Stage 2: Get all tasks
-@app.get("/tasks")
+@app.get(
+    "/tasks",
+    description="Returns all tasks"
+)
 async def get_tasks():
     return tasks
 
 
 # Stage 2: Get one task
-@app.get("/tasks/{task_id}")
+@app.get(
+    "/tasks/{task_id}",
+    description="Returns one task by its ID"
+)
 async def get_task(task_id: int):
 
     for task in tasks:
@@ -61,7 +73,11 @@ async def get_task(task_id: int):
 
 
 # Stage 3: Create a new task
-@app.post("/tasks", status_code=201)
+@app.post(
+    "/tasks",
+    status_code=201,
+    description="Creates a new task"
+)
 async def create_task(task_data: TaskCreate):
 
     title = task_data.title.strip()
@@ -86,7 +102,10 @@ async def create_task(task_data: TaskCreate):
 
 
 # Stage 4: Update a task
-@app.put("/tasks/{task_id}")
+@app.put(
+    "/tasks/{task_id}",
+    description="Updates the title or completion status of a task"
+)
 async def update_task(task_id: int, task_data: TaskUpdate):
 
     for task in tasks:
@@ -117,7 +136,6 @@ async def update_task(task_id: int, task_data: TaskUpdate):
 
             return task
 
-    # Task does not exist
     return JSONResponse(
         status_code=404,
         content={"error": f"Task {task_id} not found"}
@@ -125,7 +143,11 @@ async def update_task(task_id: int, task_data: TaskUpdate):
 
 
 # Stage 4: Delete a task
-@app.delete("/tasks/{task_id}", status_code=204)
+@app.delete(
+    "/tasks/{task_id}",
+    status_code=204,
+    description="Deletes a task by its ID"
+)
 async def delete_task(task_id: int):
 
     for task in tasks:
@@ -136,7 +158,6 @@ async def delete_task(task_id: int):
 
             return Response(status_code=204)
 
-    # Task does not exist
     return JSONResponse(
         status_code=404,
         content={"error": f"Task {task_id} not found"}
