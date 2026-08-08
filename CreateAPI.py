@@ -1,10 +1,11 @@
 from fastapi import FastAPI
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel
 
 app = FastAPI()
 
 
+# In-memory database
 tasks = [
     {"id": 1, "title": "Learn FastAPI", "done": False},
     {"id": 2, "title": "Build CRUD API", "done": False},
@@ -12,10 +13,18 @@ tasks = [
 ]
 
 
+# Data model for creating a task
 class TaskCreate(BaseModel):
     title: str
 
 
+# Data model for updating a task
+class TaskUpdate(BaseModel):
+    title: str | None = None
+    done: bool | None = None
+
+
+# Stage 1: Root endpoint
 @app.get("/")
 async def root():
     return {
@@ -25,18 +34,22 @@ async def root():
     }
 
 
+# Stage 1: Health endpoint
 @app.get("/health")
 async def health():
     return {"status": "ok"}
 
 
+# Stage 2: Get all tasks
 @app.get("/tasks")
 async def get_tasks():
     return tasks
 
 
+# Stage 2: Get one task
 @app.get("/tasks/{task_id}")
 async def get_task(task_id: int):
+
     for task in tasks:
         if task["id"] == task_id:
             return task
@@ -47,8 +60,10 @@ async def get_task(task_id: int):
     )
 
 
+# Stage 3: Create a new task
 @app.post("/tasks", status_code=201)
 async def create_task(task_data: TaskCreate):
+
     title = task_data.title.strip()
 
     if not title:
@@ -68,3 +83,61 @@ async def create_task(task_data: TaskCreate):
     tasks.append(new_task)
 
     return new_task
+
+
+# Stage 4: Update a task
+@app.put("/tasks/{task_id}")
+async def update_task(task_id: int, task_data: TaskUpdate):
+
+    for task in tasks:
+
+        if task["id"] == task_id:
+
+            # Empty update body
+            if task_data.title is None and task_data.done is None:
+                return JSONResponse(
+                    status_code=400,
+                    content={"error": "Update body cannot be empty"}
+                )
+
+            # Update title if provided
+            if task_data.title is not None:
+
+                if not task_data.title.strip():
+                    return JSONResponse(
+                        status_code=400,
+                        content={"error": "Title cannot be empty"}
+                    )
+
+                task["title"] = task_data.title.strip()
+
+            # Update done if provided
+            if task_data.done is not None:
+                task["done"] = task_data.done
+
+            return task
+
+    # Task does not exist
+    return JSONResponse(
+        status_code=404,
+        content={"error": f"Task {task_id} not found"}
+    )
+
+
+# Stage 4: Delete a task
+@app.delete("/tasks/{task_id}", status_code=204)
+async def delete_task(task_id: int):
+
+    for task in tasks:
+
+        if task["id"] == task_id:
+
+            tasks.remove(task)
+
+            return Response(status_code=204)
+
+    # Task does not exist
+    return JSONResponse(
+        status_code=404,
+        content={"error": f"Task {task_id} not found"}
+    )
