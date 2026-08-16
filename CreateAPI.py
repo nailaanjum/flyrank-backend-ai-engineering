@@ -1,9 +1,47 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel
+import sqlite3
+import os
 
 app = FastAPI()
+DB_NAME = "tasks.db"
 
+
+def get_db():
+    return sqlite3.connect(DB_NAME)
+
+
+def create_database():
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS tasks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                done INTEGER NOT NULL DEFAULT 0
+            )
+        """)
+
+        cursor.execute("SELECT COUNT(*) FROM tasks")
+        count = cursor.fetchone()[0]
+
+        if count == 0:
+            cursor.execute("INSERT INTO tasks (title, done) VALUES (?, ?)", ("Learn FastAPI", 0))
+            cursor.execute("INSERT INTO tasks (title, done) VALUES (?, ?)", ("Build CRUD API", 0))
+            cursor.execute("INSERT INTO tasks (title, done) VALUES (?, ?)", ("Learn Git", 1))
+
+        conn.commit()
+        conn.close()
+        print("Database created/updated successfully.")
+
+    except Exception as e:
+        print("ERROR creating database:", e)
+
+
+create_database()
 
 # In-memory database
 tasks = [
