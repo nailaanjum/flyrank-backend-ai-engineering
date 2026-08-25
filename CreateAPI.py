@@ -90,7 +90,17 @@ async def health():
     description="Returns all tasks"
 )
 async def get_tasks():
-    return tasks
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM tasks")
+
+    rows = cursor.fetchall()
+
+    conn.close()
+
+    return rows
 
 
 # Stage 2: Get one task
@@ -100,14 +110,25 @@ async def get_tasks():
 )
 async def get_task(task_id: int):
 
-    for task in tasks:
-        if task["id"] == task_id:
-            return task
+    conn = get_db()
+    cursor = conn.cursor()
 
-    return JSONResponse(
-        status_code=404,
-        content={"error": f"Task {task_id} not found"}
+    cursor.execute(
+        "SELECT * FROM tasks WHERE id = ?",
+        (task_id,)
     )
+
+    row = cursor.fetchone()
+
+    conn.close()
+
+    if row is None:
+        return JSONResponse(
+            status_code=404,
+            content={"error": "Task not found"}
+        )
+
+    return row
 
 
 # Stage 3: Create a new task
