@@ -14,8 +14,8 @@ A small CRUD API for managing tasks, built as part of the FlyRank Backend AI Eng
 
 **Screenshot (Swagger UI):**
 
-![Swagger UI](Swagger UI.png)
-<!-- Confirm this matches the exact folder/filename the image is saved under in your repo -->
+![Swagger UI](swagger-ui.png)
+
 
 ## Assignment 2 — SQLite persistence
 
