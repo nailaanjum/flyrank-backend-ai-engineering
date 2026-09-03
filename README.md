@@ -14,7 +14,7 @@ A small CRUD API for managing tasks, built as part of the FlyRank Backend AI Eng
 
 **Screenshot (Swagger UI):**
 
-![Swagger UI](<< REPLACE WITH ACTUAL PATH, e.g. screenshots/swagger.png >>)
+![Swagger UI](Swagger UI.png)
 <!-- Confirm this matches the exact folder/filename the image is saved under in your repo -->
 
 ## Assignment 2 — SQLite persistence
@@ -60,7 +60,7 @@ SELECT * FROM tasks WHERE done = 1;
 Changes made in DB Browser show up immediately through `GET /tasks`, with no server restart needed — the API and DB Browser are reading the exact same file, so there's one source of truth, not two things kept "in sync."
 
 **Screenshot:** `docs/Database.png`
-<!-- Add your screenshot to a docs/ folder in the repo and update the path above if different -->
+![DB Browser](Database.png)
 
 ### Checkpoints verified
 
