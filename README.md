@@ -74,3 +74,9 @@ Changes made in DB Browser show up immediately through `GET /tasks`, with no ser
 ## Tech stack
 
 Python, FastAPI, SQLite (`sqlite3`)
+
+
+## Local dev — database
+
+Start Postgres:
+docker run --name taskdb -e POSTGRES_PASSWORD=dev -e POSTGRES_DB=tasks -p 5432:5432 -v taskdata:/var/lib/postgresql -d postgres
