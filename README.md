@@ -1,136 +1,76 @@
-FlyRank Backend AI Engineering — Task CRUD API
-A simple **CRUD API built with Python and FastAPI** as part of the FlyRank Backend AI Engineering track.
+# Task API
 
-The API manages tasks and demonstrates the basic backend operations:
+A small CRUD API for managing tasks, built as part of the FlyRank Backend AI Engineering internship (Week 3, Assignments 1–2).
 
-* **Create** a task
-* **Read** all tasks or a single task
-* **Update** a task
-* **Delete** a task
+## Assignment 1 — In-memory CRUD API
 
-The project also includes input validation, HTTP status codes, Swagger UI documentation, and Git/GitHub version control.
+- `GET /tasks` — list all tasks
+- `GET /tasks/{id}` — get a single task by id (404 if not found)
+- `POST /tasks` — create a task (400 if `title` is missing/empty, 201 on success)
+- `PUT /tasks/{id}` — update a task (404 if not found, 400 if body is invalid)
+- `DELETE /tasks/{id}` — delete a task (204 on success, 404 if not found)
 
-## Tech Stack
+> Note: this stage stored tasks in memory only — data reset every time the server restarted. This limitation was removed in Assignment 2 (see below).
 
-* Python
-* FastAPI
-* Uvicorn
-* Pydantic
-* Git & GitHub
+**Screenshot (Swagger UI):**
 
-## Installation
+![Swagger UI](swagger-ui.png)
 
-Clone the repository and open the project folder.
 
-Install the required packages:
+## Assignment 2 — SQLite persistence
+
+Starting from this stage, all endpoints above read from and write to a real database instead of an in-memory list. The API surface (routes, status codes, validation rules) is unchanged — only where the data lives has changed.
+
+**Why SQLite:** single file, zero setup, no separate server process to install or run, and it survives restarts — which makes it a good fit for a small project like this.
+
+**Where the database lives:** `tasks.db`, created automatically the first time the app runs. It's git-ignored, so every fresh clone starts with a clean database and reseeds the three example tasks.
+
+**Schema:**
+
+```sql
+CREATE TABLE IF NOT EXISTS tasks (
+    id INTEGER PRIMARY KEY,
+    title TEXT NOT NULL,
+    done BOOLEAN NOT NULL DEFAULT 0
+);
+```
+
+### Running the project
 
 ```bash
-pip install fastapi uvicorn pydantic
+# 1. Install dependencies
+pip install -r requirements.txt
+
+# 2. Start the server
+<< REPLACE WITH YOUR ACTUAL START COMMAND, e.g. uvicorn main:app --reload >>
 ```
 
-## Run the API
+On first run, `tasks.db` is created automatically, the `tasks` table is set up, and three example tasks are seeded. On every run after that, the seed step is skipped because the table is no longer empty.
 
-Start the FastAPI development server with:
+### Exploring the database directly
 
-```bash
-py -m uvicorn main:app --reload
+Opened `tasks.db` in [DB Browser for SQLite](https://sqlitebrowser.org/) and ran queries by hand in the "Execute SQL" tab. Example:
+
+```sql
+SELECT * FROM tasks WHERE done = 1;
 ```
 
-The API will be available at:
+**Result:** << REPLACE — e.g. "returned the 2 tasks that had been marked complete via PUT" >>
 
-```text
-http://127.0.0.1:8000
-```
+Changes made in DB Browser show up immediately through `GET /tasks`, with no server restart needed — the API and DB Browser are reading the exact same file, so there's one source of truth, not two things kept "in sync."
 
-## Swagger UI
+**Screenshot:** `docs/Database.png`
+![DB Browser](Database.png)
 
-FastAPI automatically generates interactive API documentation.
+### Checkpoints verified
 
-Open:
+- [x] Restarting the app three times still shows exactly 3 seeded tasks (not 6, not 9)
+- [x] `GET /tasks` and `GET /tasks/{id}` read live from `tasks.db`
+- [x] `POST /tasks` persists across a server restart
+- [x] `PUT`/`DELETE` update the database; correct status codes (200, 204, 404) confirmed
+- [x] Hand-run SQL queries in DB Browser are reflected instantly through the API
+- [x] Clean clone + one command → working app with table and 3 seeded tasks, no manual setup
 
-```text
-http://127.0.0.1:8000/docs
-```
+## Tech stack
 
-From Swagger UI, you can use **Try it out** to create, read, update, and delete tasks without using curl.
-
-## API Endpoints
-
-| Method | Endpoint           | Description                            |
-| ------ | ------------------ | -------------------------------------- |
-| GET    | `/`                | Returns information about the Task API |
-| GET    | `/health`          | Checks whether the API is running      |
-| GET    | `/tasks`           | Returns all tasks                      |
-| GET    | `/tasks/{task_id}` | Returns one task by ID                 |
-| POST   | `/tasks`           | Creates a new task                     |
-| PUT    | `/tasks/{task_id}` | Updates a task                         |
-| DELETE | `/tasks/{task_id}` | Deletes a task                         |
-
-## Example Request
-
-### Create a task
-
-```bash
-curl -i -X POST http://127.0.0.1:8000/tasks -H "Content-Type: application/json" -d "{\"title\":\"Buy milk\"}"
-```
-
-Example response:
-
-```text
-HTTP/1.1 201 Created
-content-type: application/json
-
-{"id":4,"title":"Buy milk","done":false}
-```
-
-## CRUD Flow
-
-The complete CRUD cycle can be performed through Swagger UI:
-
-```text
-POST   → Create a task
-GET    → Read the task
-PUT    → Update the task
-DELETE → Delete the task
-GET    → Confirm the task was deleted
-```
-
-The API uses appropriate HTTP status codes:
-
-| Status Code | Meaning                                     |
-| ----------- | ------------------------------------------- |
-| 200         | Request successful                          |
-| 201         | Task successfully created                   |
-| 204         | Task successfully deleted; no response body |
-| 400         | Invalid request                             |
-| 404         | Task not found                              |
-| 422         | Invalid JSON or request validation error    |
-
-## Swagger UI Screenshot
-
-![Swagger UI](swagger-screenshot.png)
-
-## Project Structure
-
-```text
-flyrank-backend-ai-engineering/
-│
-├── main.py
-├── body.json
-├── .gitignore
-└── README.md
-```
-
-## Learning Outcome
-
-This project demonstrates the fundamentals of building and documenting a REST API with FastAPI, including:
-
-* HTTP methods and status codes
-* Path parameters
-* JSON request bodies
-* Pydantic data validation
-* CRUD operations
-* Error handling
-* Swagger/OpenAPI documentation
-* Git version control
-* Publishing a project to GitHub
+Python, FastAPI, SQLite (`sqlite3`)
