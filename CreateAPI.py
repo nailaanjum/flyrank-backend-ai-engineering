@@ -1,54 +1,19 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel
-import sqlite3
+from repository import get_connection, initialize_database
 import os
+from contextlib import asynccontextmanager
 
 app = FastAPI()
-DB_NAME = "tasks.db"
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    initialize_database()
+    yield
+    # (optional: cleanup code goes here, runs on shutdown)
 
-def get_db():
-    return sqlite3.connect(DB_NAME)
-
-
-def create_database():
-    try:
-        conn = get_db()
-        cursor = conn.cursor()
-
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS tasks (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                title TEXT NOT NULL,
-                done INTEGER NOT NULL DEFAULT 0
-            )
-        """)
-
-        cursor.execute("SELECT COUNT(*) FROM tasks")
-        count = cursor.fetchone()[0]
-
-        if count == 0:
-            cursor.execute("INSERT INTO tasks (title, done) VALUES (?, ?)", ("Learn FastAPI", 0))
-            cursor.execute("INSERT INTO tasks (title, done) VALUES (?, ?)", ("Build CRUD API", 0))
-            cursor.execute("INSERT INTO tasks (title, done) VALUES (?, ?)", ("Learn Git", 1))
-
-        conn.commit()
-        conn.close()
-        print("Database created/updated successfully.")
-
-    except Exception as e:
-        print("ERROR creating database:", e)
-
-
-create_database()
-
-# In-memory database
-tasks = [
-    {"id": 1, "title": "Learn FastAPI", "done": False},
-    {"id": 2, "title": "Build CRUD API", "done": False},
-    {"id": 3, "title": "Learn Git", "done": True}
-]
+app = FastAPI(lifespan=lifespan)
 
 
 # Data model for creating a task
@@ -91,7 +56,7 @@ async def health():
 )
 async def get_tasks():
 
-    conn = get_db()
+    conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute("SELECT * FROM tasks")
@@ -110,11 +75,11 @@ async def get_tasks():
 )
 async def get_task(task_id: int):
 
-    conn = get_db()
+    conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute(
-        "SELECT * FROM tasks WHERE id = ?",
+        "SELECT * FROM tasks WHERE id = %s",
         (task_id,)
     )
 
@@ -164,11 +129,11 @@ async def update_task(task_id: int, task_data: TaskUpdate):
         title = None
 
     # Get the current task from the database
-    conn = get_db()
+    conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute(
-        "SELECT * FROM tasks WHERE id = ?",
+        "SELECT * FROM tasks WHERE id = %s",
         (task_id,)
     )
 
@@ -192,9 +157,9 @@ async def update_task(task_id: int, task_data: TaskUpdate):
 
     # Update the database
     cursor.execute(
-        "UPDATE tasks SET title = ?, done = ? WHERE id = ?",
-        (new_title, int(new_done), task_id)
-    )
+    "UPDATE tasks SET title = %s, done = %s WHERE id = %s",
+    (new_title, new_done, task_id)
+)
 
     conn.commit()
 
@@ -216,12 +181,12 @@ async def update_task(task_id: int, task_data: TaskUpdate):
 )
 async def delete_task(task_id: int):
 
-    conn = get_db()
+    conn = get_connection()
     cursor = conn.cursor()
 
     # Check if the task exists
     cursor.execute(
-        "SELECT * FROM tasks WHERE id = ?",
+        "SELECT * FROM tasks WHERE id = %s",
         (task_id,)
     )
 
@@ -237,7 +202,7 @@ async def delete_task(task_id: int):
 
     # Delete the task from the database
     cursor.execute(
-        "DELETE FROM tasks WHERE id = ?",
+        "DELETE FROM tasks WHERE id = %s",
         (task_id,)
     )
 
