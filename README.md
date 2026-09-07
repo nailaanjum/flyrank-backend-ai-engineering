@@ -1,5 +1,98 @@
 # Task API
 
+A CRUD API for managing tasks, built as part of the FlyRank Backend AI Engineering internship. Originally an in-memory API (Assignment 1), then SQLite-backed (Assignment 2), now running on PostgreSQL in Docker (Containerization stage, current).
+
+## Run it (current — Postgres + Docker)
+
+1. Clone this repo and enter the folder:
+
+git clone https://github.com/nailaanjum/flyrank-backend-ai-engineering.git 
+cd flyrank-backend-ai-engineering
+
+2. Copy the example environment file:
+
+copy .env.example .env
+
+3. Start everything — API and database together:
+
+docker compose up
+
+4. Open `http://localhost:8000/docs` to try the API interactively, or hit `http://localhost:8000/tasks` directly.
+
+HTTP/1.1 200 OK
+date: Mon, 07 Sep 2026 19:45:02 GMT
+server: uvicorn
+content-length: 105
+content-type: application/json
+
+[[1,"Learn FastAPI",false],[2,"Learn PostgreSQL",false],[3,"Build CRUD API",false],[4,"learn llm",false]]
+
+
+## Environment variables
+
+Copy `.env.example` to `.env` before running standalone (outside Compose). It defines:
+
+DATABASE_URL=postgres://username:password@localhost:5432/dbname
+
+When run via `docker compose up`, the real connection string is set in `compose.yaml`, pointing at the `db` service rather than `localhost`.
+
+## Endpoints
+
+| Method | Path          | What it does                          |
+|--------|---------------|-----------------------------------------|
+| GET    | `/`           | Basic info about the API                |
+| GET    | `/health`     | Confirms the API is running             |
+| GET    | `/tasks`      | Lists every task                        |
+| GET    | `/tasks/{id}` | Gets one task by its id (404 if missing)|
+| POST   | `/tasks`      | Creates a task (400 if title empty/missing, 201 on success) |
+| PUT    | `/tasks/{id}` | Updates a task's title/done status (404 if missing) |
+| DELETE | `/tasks/{id}` | Deletes a task (204 on success, 404 if missing) |
+
+## Example request
+
+curl -i http://localhost:8000/tasks
+
+HTTP/1.1 200 OK
+date: Mon, 07 Sep 2026 19:45:02 GMT
+server: uvicorn
+content-length: 105
+content-type: application/json
+
+[[1,"Learn FastAPI",false],[2,"Learn PostgreSQL",false],[3,"Build CRUD API",false],[4,"learn llm",false]]
+## Database
+
+Confirmed directly inside the running Postgres container:
+
+docker exec -it crud_api-db-1 psql -U postgres -d tasks -c "\dt"
+docker exec -it crud_api-db-1 psql -U postgres -d tasks -c "SELECT * FROM tasks;"
+
+![Database contents](database-proof.png)
+
+## Tech stack
+
+Python, FastAPI, PostgreSQL, psycopg, Docker, Docker Compose
+
+## Local dev — running the database standalone (without Compose)
+
+docker run --name taskdb -e POSTGRES_PASSWORD=dev -e POSTGRES_DB=tasks -p 5432:5432 -v taskdata:/var/lib/postgresql -d postgres
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Task API
+
 A small CRUD API for managing tasks, built as part of the FlyRank Backend AI Engineering internship (Week 3, Assignments 1–2).
 
 ## Assignment 1 — In-memory CRUD API
@@ -74,3 +167,17 @@ Changes made in DB Browser show up immediately through `GET /tasks`, with no ser
 ## Tech stack
 
 Python, FastAPI, SQLite (`sqlite3`)
+
+
+## Local dev — database
+
+Start Postgres:
+docker run --name taskdb -e POSTGRES_PASSWORD=dev -e POSTGRES_DB=tasks -p 5432:5432 -v taskdata:/var/lib/postgresql -d postgres
+
+
+
+
+
+
+
+
