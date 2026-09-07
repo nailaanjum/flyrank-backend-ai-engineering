@@ -211,3 +211,37 @@ async def delete_task(task_id: int):
 
     # Successful DELETE → 204 with empty body
     return Response(status_code=204)
+
+
+@app.post(
+    "/tasks",
+    status_code=201,
+    description="Creates a new task"
+)
+async def create_task(task_data: TaskCreate):
+
+    title = task_data.title.strip()
+
+    if not title:
+        return JSONResponse(
+            status_code=400,
+            content={"error": "Title cannot be empty"}
+        )
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "INSERT INTO tasks (title, done) VALUES (%s, %s) RETURNING id, title, done",
+        (title, False)
+    )
+
+    row = cursor.fetchone()
+    conn.commit()
+    conn.close()
+
+    return {
+        "id": row[0],
+        "title": row[1],
+        "done": row[2]
+    }
